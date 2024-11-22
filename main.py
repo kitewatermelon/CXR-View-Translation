@@ -14,6 +14,10 @@ def main(args):
     print(args)
     torch.manual_seed(args.seed)
     print("[INFO] Welcome to my Zone")
+    if torch.cuda.is_available():
+        print("[INFO] CUDA is available!")
+    else:
+        print("[INFO] CUDA is not available.")
     print("[INFO] Create directories")
     save_path = make_dirs(args.mode)
 
@@ -30,7 +34,7 @@ def main(args):
     batch_size = args.batch_size
     num_workers = args.num_workers
 
-    dataset = Pix2PixMedicalImageDataset(df=df, transform=transform, mode=mode, max_samples=100, fs=fs, p_no=p_no)
+    dataset = Pix2PixMedicalImageDataset(df=df, transform=transform, mode=mode, max_samples=len(df)-1, fs=fs, p_no=p_no)
 
     train_size = int(train_ratio * len(dataset))
     val_size = int(val_ratio * len(dataset))
