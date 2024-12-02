@@ -20,9 +20,7 @@ def main(args):
         print("[INFO] CUDA is not available.")
     print("[INFO] Create directories")
     save_path = make_dirs(args.mode)
-
-    fs, token = get_gcs_info()
-    df = get_data(fs, token)
+    df = get_data()
     
     mode = args.mode
     p_no = args.p_no
@@ -34,7 +32,7 @@ def main(args):
     batch_size = args.batch_size
     num_workers = args.num_workers
 
-    dataset = Pix2PixMedicalImageDataset(df=df, transform=transform, mode=mode, max_samples=len(df)-1, fs=fs, p_no=p_no)
+    dataset = Pix2PixMedicalImageDataset(df=df, transform=transform, mode=mode, max_samples=len(df)-1, p_no=p_no)
 
     train_size = int(train_ratio * len(dataset))
     val_size = int(val_ratio * len(dataset))

@@ -6,20 +6,18 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 
 class Pix2PixMedicalImageDataset(Dataset):
-    def __init__(self, df, transform=None, mode='P2L', max_samples=100, fs=None , p_no=(10,19)):
+    def __init__(self, df, transform=None, mode='P2L', max_samples=100 , p_no=(10,19)):
         """
         Args:
             df (pd.DataFrame): DataFrame with 'subject_id', 'study_id', 'ViewPosition', 'path', and 'label' columns.
             transform (callable, optional): Optional transform to be applied on a sample.
             mode (str, optional) : Available modes are 'P2L', 'L2P'
             max_samples (int, optional): Maximum number of samples to be used in the dataset. Defaults to 100.
-            fs : GCSFileSystem Object that can contact Google Clouds
             p_no : Directory range and the number ex) (a=10, b=19) p10 to p19 data used. (min = 10 max = 19)
         """ 
         self.transform = transform
         self.mode = mode
         self.max_samples = max_samples
-        self.fs = fs
         self.p_no = p_no
         self.df = df
         self.df = self._set_data()
@@ -81,7 +79,7 @@ class Pix2PixMedicalImageDataset(Dataset):
         return {'input': input_image, 'target': target_image, 'label': label}
 
     def load_image(self, image_path):
-        with self.fs.open(image_path, 'rb') as img_file:
+        with open(image_path, 'rb') as img_file:
             img_data = img_file.read()
         img = Image.open(BytesIO(img_data)).convert('RGB')
         return img
@@ -111,10 +109,7 @@ class Pix2PixMedicalImageDataset(Dataset):
 if __name__ == "__main__":
     import os
     import data_prepareing
-    from utils.gcs_utils import get_gcs_info
-
-    fs, token = get_gcs_info()
-
+    
     print("🚀 Starting Pix2Pix Medical Image Dataset preparation...")
     try:
         if os.path.exists("processed.csv"):
@@ -123,7 +118,7 @@ if __name__ == "__main__":
             raise FileNotFoundError("❌ Processed dataset not found.")
     except FileNotFoundError:
         print("⚙️ Initiating dataset preparation...")
-        data_prepareing.get_data(fs, token)
+        data_prepareing.get_data()
         print("✅ Dataset preparation complete.")
     
     print("📂 Loading dataset...")
@@ -134,8 +129,7 @@ if __name__ == "__main__":
         df, 
         transform=None, 
         mode='P2L', 
-        max_samples=len(df), 
-        fs=fs , 
+        max_samples=len(df),  
         p_no=(10,19)
     )
     print(f"✅ Dataset ready for use. \n length : {len(dataset)} ")

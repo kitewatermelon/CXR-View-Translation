@@ -1,15 +1,15 @@
 import os
 import re
 import pandas as pd
-from utils.private.private import PATH
+from utils.utils import PATH
 
 
-def get_data(fs, token):
+def get_data():
     try:
         # 파일 존재 여부 확인
-        if os.path.exists("data/processed.csv"):
+        if os.path.exists(PATH + "processed.csv"):
             print("[INFO] Processed data already exists. Skipping data processing.")
-            df = pd.read_csv("data/processed.csv")
+            df = pd.read_csv(PATH + "processed.csv")
             return df
         else:
             raise FileNotFoundError("File not found")  # 파일이 없으면 예외 발생
@@ -35,27 +35,15 @@ def get_data(fs, token):
 
 
         print("[INFO] Loading datasets...")
-        if os.path.exists("data/mimic-cxr-2.0.0-negbio.csv"):
-            negbio = pd.read_csv("data/mimic-cxr-2.0.0-negbio.csv")
-        else:
-            negbio = pd.read_csv(PATH + "data/mimic-cxr-2.0.0-negbio.csv.gz", compression="gzip", storage_options={"token": token})
-        
-        if os.path.exists("data/mimic-cxr-2.0.0-metadata.csv"):
-            metadata = pd.read_csv("data/mimic-cxr-2.0.0-metadata.csv")
-        else:
-            metadata = pd.read_csv(PATH + "data/mimic-cxr-2.0.0-metadata.csv.gz", compression="gzip", storage_options={"token": token})
-
-        # if os.path.exists("mimic-cxr-2.0.0-split.csv"):
-        #     split = pd.read_csv("mimic-cxr-2.0.0-split.csv")
-        # else:
-        #     split = pd.read_csv(PATH + "mimic-cxr-2.0.0-split.csv.gz", compression="gzip", storage_options={"token": token})
+        negbio = pd.read_csv(PATH + "mimic-cxr-2.0.0-negbio.csv.gz", compression="gzip")
+        metadata = pd.read_csv(PATH + "mimic-cxr-2.0.0-metadata.csv.gz", compression="gzip")
         
         print("[INFO] Converting data types...")
         negbio = negbio.astype(str)
         metadata = metadata.astype(str)
         print("[INFO] Reading image paths...")
         IMAGE_FILENAMES = PATH + "IMAGE_FILENAMES"
-        with fs.open(IMAGE_FILENAMES, 'r') as file:
+        with open(IMAGE_FILENAMES, 'r') as file:
             image_paths = [PATH + line.strip() for line in file]
 
         print("[INFO] Extracting IDs from image paths...")
@@ -98,11 +86,9 @@ def get_data(fs, token):
         df = PA_LAT_set_df.groupby(['subject_id', 'study_id']).apply(select_one_pa_lat).reset_index(drop=True)
 
         print("[INFO] Saving processed dataset to 'processed.csv'...")
-        df.to_csv("data/processed.csv", index=False)
+        df.to_csv(PATH + "processed.csv", index=False)
         print("[INFO] Dataset processing complete. Saved to 'processed.csv'.")
         return df
 
 if __name__ == "__main__":
-    from utils.gcs_utils import get_gcs_info
-    fs, token = get_gcs_info()
     get_data()
