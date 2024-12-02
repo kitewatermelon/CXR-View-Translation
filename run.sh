@@ -1,3 +1,1 @@
-docker build -t docker-python:latest .
-docker rm docker-python
-docker run --gpus all -it --name docker-python docker-python:latest
+python main.py --mode L2P --p_no 10 11
