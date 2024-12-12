@@ -1,0 +1,1 @@
+PATH = "/mnt/d/physionet.org/files/mimic-cxr-jpg/2.1.0/"

@@ -1,15 +1,15 @@
 import os
 import re
 import pandas as pd
-from utils.private.private import PATH
+from utils.utils import PATH
 
 
 def get_data():
     try:
         # 파일 존재 여부 확인
-        if os.path.exists("data/processed.csv"):
+        if os.path.exists(PATH + "processed.csv"):
             print("[INFO] Processed data already exists. Skipping data processing.")
-            df = pd.read_csv("data/processed.csv")
+            df = pd.read_csv(PATH + "processed.csv")
             return df
         else:
             raise FileNotFoundError("File not found")  # 파일이 없으면 예외 발생
@@ -102,7 +102,7 @@ def get_data():
         df = PA_LAT_set_df.groupby(['subject_id', 'study_id']).apply(select_one_pa_lat).reset_index(drop=True)
 
         print("[INFO] Saving processed dataset to 'processed.csv'...")
-        df.to_csv("data/processed.csv", index=False)
+        df.to_csv(PATH + "processed.csv", index=False)
         print("[INFO] Dataset processing complete. Saved to 'processed.csv'.")
         return df
     

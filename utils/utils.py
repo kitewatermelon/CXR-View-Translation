@@ -1,6 +1,7 @@
 import os 
 from datetime import datetime
 
+PATH = "physionet.org/files/mimic-cxr-jpg/2.1.0/"
 def make_dirs(mode):
     i = 0
     save_path = rf"results/{mode + datetime.today().strftime('%y%m%d')}/{i}/"
@@ -13,5 +14,7 @@ def make_dirs(mode):
         os.makedirs(save_path + path, exist_ok=True)
     return save_path
 
+
 if __name__ == "__main__":
     make_dirs('L2P')
+

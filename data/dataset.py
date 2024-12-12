@@ -131,6 +131,7 @@ if __name__ == "__main__":
     except FileNotFoundError:
         print("⚙️ Initiating dataset preparation...")
         data_prepareing.get_data()
+        data_prepareing.get_data()
         print("✅ Dataset preparation complete.")
     
     print("📂 Loading dataset...")

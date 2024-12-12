@@ -1,6 +1,5 @@
 __pycache__
 example.egg-info
-private
 results
 *.csv
 # Byte-compiled / optimized / DLL files
