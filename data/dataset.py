@@ -4,9 +4,10 @@ from PIL import Image
 import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
+from PIL import UnidentifiedImageError
 
 class Pix2PixMedicalImageDataset(Dataset):
-    def __init__(self, df, transform=None, mode='P2L', max_samples=100 , p_no=(10,19)):
+    def __init__(self, df, transform=None, mode='P2L', max_samples=100, option=None, p_no=(10,19)):
         """
         Args:
             df (pd.DataFrame): DataFrame with 'subject_id', 'study_id', 'ViewPosition', 'path', and 'label' columns.
@@ -18,6 +19,7 @@ class Pix2PixMedicalImageDataset(Dataset):
         self.transform = transform
         self.mode = mode
         self.max_samples = max_samples
+        self.option = option
         self.p_no = p_no
         self.df = df
         self.df = self._set_data()
@@ -47,11 +49,15 @@ class Pix2PixMedicalImageDataset(Dataset):
     def _set_data(self):
         start, end = self.p_no
         regex = '|'.join([f"/p{i}/" for i in range(start, end + 1)])
+        
+        # 디렉토리와 라벨 조건으로 필터링
+        filtered_df = self.df[
+            self.df['path'].str.contains(regex) & (self.df['label'] == self.option)
+        ]
+        
+        print(f"[INFO] Filtered dataset: {len(filtered_df)} entries with label '{self.option}'.")
+        return filtered_df
 
-        self.df = self.df[self.df['path'].str.contains(regex)]
-
-        return self.df
-    
     def __len__(self):
         return len(self.paired_df)
 
@@ -76,13 +82,19 @@ class Pix2PixMedicalImageDataset(Dataset):
             input_image = self.transform[0](input_image)
             target_image = self.transform[1](target_image)
         
-        return {'input': input_image, 'target': target_image, 'label': label}
+        return {'input': input_image, 'target': target_image}
+
 
     def load_image(self, image_path):
-        with open(image_path, 'rb') as img_file:
-            img_data = img_file.read()
-        img = Image.open(BytesIO(img_data)).convert('RGB')
-        return img
+        try:
+            with open(image_path, 'rb') as img_file:
+                img_data = img_file.read()
+            img = Image.open(BytesIO(img_data)).convert('RGB')
+            return img
+        except (FileNotFoundError, UnidentifiedImageError) as e:
+            print(f"Failed to load image from path: {image_path} - {e}")
+            return None  # 실패 시 None 반환
+
     
     def show_sample(self, idx):
         sample = self.__getitem__(idx)
@@ -109,7 +121,7 @@ class Pix2PixMedicalImageDataset(Dataset):
 if __name__ == "__main__":
     import os
     import data_prepareing
-    
+
     print("🚀 Starting Pix2Pix Medical Image Dataset preparation...")
     try:
         if os.path.exists("processed.csv"):
@@ -118,6 +130,7 @@ if __name__ == "__main__":
             raise FileNotFoundError("❌ Processed dataset not found.")
     except FileNotFoundError:
         print("⚙️ Initiating dataset preparation...")
+        data_prepareing.get_data()
         data_prepareing.get_data()
         print("✅ Dataset preparation complete.")
     
@@ -129,7 +142,8 @@ if __name__ == "__main__":
         df, 
         transform=None, 
         mode='P2L', 
-        max_samples=len(df),  
+        max_samples=len(df), 
+        option="No Finding",
         p_no=(10,19)
     )
     print(f"✅ Dataset ready for use. \n length : {len(dataset)} ")

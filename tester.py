@@ -30,8 +30,12 @@ class Tester():
 
         with torch.no_grad():
             for i, batch in enumerate(self.test_loader):
-                inputs = batch['input'].to(self.device)
-                targets = batch['target'].to(self.device)
+                inputs = batch['input']
+                targets = batch['target']
+                
+                # 'input'과 'target'이 str 형식이라면, float으로 변환
+                inputs = inputs.float().to(self.device)
+                targets = targets.float().to(self.device)
 
                 # Discriminator Test
                 Disc_Loss = self.discriminator_validation(inputs, targets)
