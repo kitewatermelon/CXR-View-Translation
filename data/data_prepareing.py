@@ -4,7 +4,7 @@ import pandas as pd
 from utils.private.private import PATH
 
 
-def get_data(fs, token):
+def get_data():
     try:
         # 파일 존재 여부 확인
         if os.path.exists("data/processed.csv"):
@@ -38,26 +38,30 @@ def get_data(fs, token):
         if os.path.exists("data/mimic-cxr-2.0.0-negbio.csv"):
             negbio = pd.read_csv("data/mimic-cxr-2.0.0-negbio.csv")
         else:
-            negbio = pd.read_csv(PATH + "data/mimic-cxr-2.0.0-negbio.csv.gz", compression="gzip", storage_options={"token": token})
+            negbio = pd.read_csv(PATH + "mimic-cxr-2.0.0-negbio.csv.gz", compression="gzip")
         
         if os.path.exists("data/mimic-cxr-2.0.0-metadata.csv"):
             metadata = pd.read_csv("data/mimic-cxr-2.0.0-metadata.csv")
         else:
-            metadata = pd.read_csv(PATH + "data/mimic-cxr-2.0.0-metadata.csv.gz", compression="gzip", storage_options={"token": token})
+            metadata = pd.read_csv(PATH + "mimic-cxr-2.0.0-metadata.csv.gz", compression="gzip")
 
         # if os.path.exists("mimic-cxr-2.0.0-split.csv"):
         #     split = pd.read_csv("mimic-cxr-2.0.0-split.csv")
         # else:
-        #     split = pd.read_csv(PATH + "mimic-cxr-2.0.0-split.csv.gz", compression="gzip", storage_options={"token": token})
+        #     split = pd.read_csv(PATH + "mimic-cxr-2.0.0-split.csv.gz", compression="gzip")
         
         print("[INFO] Converting data types...")
         negbio = negbio.astype(str)
         metadata = metadata.astype(str)
         print("[INFO] Reading image paths...")
         IMAGE_FILENAMES = PATH + "IMAGE_FILENAMES"
-        with fs.open(IMAGE_FILENAMES, 'r') as file:
-            image_paths = [PATH + line.strip() for line in file]
-
+        with open(IMAGE_FILENAMES, 'r') as file:
+            # 각 경로에 대해 유효성 확인
+            image_paths = [
+                PATH + line.strip()
+                for line in file
+                if is_valid_path(line.strip())
+            ]
         print("[INFO] Extracting IDs from image paths...")
         data = []
         for path in image_paths:
@@ -101,8 +105,42 @@ def get_data(fs, token):
         df.to_csv("data/processed.csv", index=False)
         print("[INFO] Dataset processing complete. Saved to 'processed.csv'.")
         return df
+    
+def is_valid_path(file_path):
+    """
+    경로가 기준 숫자보다 작은지 확인합니다.
+    """# 유효한 디렉토리와 최대 번호를 정의합니다.
+directory_ranges = {
+    "p10": 10574803,
+    "p11": 11550610,
+    "p12": 12557139,
+    "p13": 13545559,
+    "p14": 14325592
+}
+
+# 기본 경로를 정의합니다.
+BASE_PATH = "/mnt/d/physionet.org/files/mimic-cxr-jpg/2.1.0"
+
+def is_valid_path(file_path):
+    """
+    경로가 기준 숫자보다 작은지 확인합니다.
+    """
+    parts = file_path.strip("/").split("/")
+    if len(parts) < 3:
+        return False  # 예상된 구조가 아니면 무시
+
+    directory = parts[1]  # 예: "p10"
+    file_name = parts[2]  # 예: "p10000032"
+
+    if directory not in directory_ranges:
+        return False  # 유효하지 않은 디렉토리
+
+    try:
+        file_number = int(file_name[1:])  # "p10000032" -> 10000032
+        max_number = directory_ranges[directory]
+        return file_number <= max_number
+    except ValueError:
+        return False  # 숫자로 변환 실패 시
 
 if __name__ == "__main__":
-    from utils.gcs_utils import get_gcs_info
-    fs, token = get_gcs_info()
     get_data()

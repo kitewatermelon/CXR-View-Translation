@@ -41,8 +41,12 @@ class Trainer():
             self.discriminator.train()
             train_loss = 0
             for batch in tqdm(self.train_loader):
-                inputs = batch['input'].to(self.device)
-                targets = batch['target'].to(self.device)
+                inputs = batch['input']
+                targets = batch['target']
+                
+                # 'input'과 'target'이 str 형식이라면, float으로 변환
+                inputs = inputs.float().to(self.device)
+                targets = targets.float().to(self.device)
 
                 Disc_Loss = self.discriminator_training(inputs, targets, self.discriminator_opt)
 
@@ -59,8 +63,12 @@ class Trainer():
             val_loss = 0
             with torch.no_grad():
                 for batch in tqdm(self.val_loader):
-                    inputs = batch['input'].to(self.device)
-                    targets = batch['target'].to(self.device)
+                    inputs = batch['input']
+                    targets = batch['target']
+                    
+                    # 'input'과 'target'이 str 형식이라면, float으로 변환
+                    inputs = inputs.float().to(self.device)
+                    targets = targets.float().to(self.device)
 
                     Disc_Loss = self.discriminator_validation(inputs, targets)
                     Gen_Loss, generator_image = self.generator_validation(inputs, targets, self.L1_lambda)
@@ -69,6 +77,10 @@ class Trainer():
             avg_val_loss = val_loss / len(self.val_loader)
             history['val_loss'].append(avg_val_loss)
             print(f"[INFO] Validation Loss after epoch {epoch + 1}: {avg_val_loss}")
+
+            if (epoch + 1) % 5 == 0:
+                torch.save(self.generator.state_dict(), f"{self.save_path}/model/generator-{epoch}.pth")
+                torch.save(self.discriminator.state_dict(), f"{self.save_path}/model/discriminator-{epoch}.pth")
 
             if epoch > 28:
                 if avg_val_loss < best_val_loss:
@@ -86,7 +98,7 @@ class Trainer():
                     break
             
             save_image(inputs, generator_image, targets, num_images=5,i=1, save_path = self.save_path)
-
+        
         save_loss(history, self.save_path)
         torch.save(self.generator.state_dict(), f"{self.save_path}/model/generator.pth")
         torch.save(self.discriminator.state_dict(), f"{self.save_path}/model/discriminator.pth")

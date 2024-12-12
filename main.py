@@ -2,7 +2,6 @@ import argparse
 import torch 
 from torch.utils.data import DataLoader
 
-from utils.gcs_utils import get_gcs_info
 from utils.utils import make_dirs
 from data.dataset import Pix2PixMedicalImageDataset
 from data.data_prepareing import get_data
@@ -17,8 +16,7 @@ def main(args):
     print("[INFO] Create directories")
     save_path = make_dirs(args.mode)
 
-    fs, token = get_gcs_info()
-    df = get_data(fs, token)
+    df = get_data()
     
     mode = args.mode
     p_no = args.p_no
@@ -30,7 +28,12 @@ def main(args):
     batch_size = args.batch_size
     num_workers = args.num_workers
 
-    dataset = Pix2PixMedicalImageDataset(df=df, transform=transform, mode=mode, max_samples=100, fs=fs, p_no=p_no)
+    dataset = Pix2PixMedicalImageDataset(df=df, 
+                                         transform=transform, 
+                                         mode=mode, 
+                                         max_samples=len(df)-1, 
+                                         option="No Finding",
+                                         p_no=p_no)
 
     train_size = int(train_ratio * len(dataset))
     val_size = int(val_ratio * len(dataset))
@@ -42,6 +45,20 @@ def main(args):
             "\n     val size    :", len(val_dataset), 
             "\n     test size   :", len(test_dataset))
     
+    # def custom_collate_fn(batch):
+    #     images = []
+    #     for sample in batch:
+    #         input_image = sample['input']
+    #         target_image = sample['target']
+            
+    #         input_image = torch.tensor(input_image, dtype=torch.float32)
+    #         target_image = torch.tensor(target_image, dtype=torch.float32)
+            
+    #         images.append({'input': input_image, 'target': target_image})
+    # , collate_fn=custom_collate_fn
+    #     return images
+
+
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
